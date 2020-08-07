@@ -11,14 +11,14 @@ from nltk.corpus import stopwords
 
 
 def read_json_data():
-    '''
+    """
          Reads and cleans data from the input dataset, which is in JSON form. Converts this JSON data into a pandas
          dataframe, removes rows that are retweets or that contain URLS, and drops the columns that aren't relevant
          (retweet_count, favorites, id, is_retweet).
          args: None
          ret:
              tweet_data: preprocessed twitter data according to the above conventions
-    '''
+    """
 
     with open('data/trump_tweets.json') as f:
         json_data = json.load(f)
@@ -52,14 +52,14 @@ def read_json_data():
 
 
 def pre_label_data(data):
-    '''
+    """
            Naively label sentiment data based on the presence of a list of words (e.g hillary -> negative,
            biden -> negative, rally -> positive, Make America Great Again -> positive).
            args:
                data: preprocessed pandas dataframe containing 3 columns: source, text, time
            ret:
               None: dataframe is prelabeled with sentiment values based on presence of certain words
-    '''
+    """
     neg_words = ['hillary', 'biden', 'joe', 'pelosi', 'schumer', 'democrat', 'fake news', 'obama', 'jeb', 'cnn',
                  'msnbc']
     pos_words = ['rally', 'make america great again', 'crowd']
@@ -72,21 +72,20 @@ def pre_label_data(data):
         'positive', data['sentiment'])
 
 
-def process_tweet(tweet):
-    '''
+def process_tweet(tweet, stemming_lemmatize: bool):
+    """
         "Clean" a tweet by retrieving only the most important parts required for NLP analysis. This includes the
         following steps:
 
         1. remove all text in quotations (not tweeted by trump), all irrelevant punctuation, and mentions
-        2. translating emojis into text that can be processed
-        3. tokenizing the tweet (splitting into individual words)
-        4. stemming and lemmatizing individual words
+        2. tokenizing the tweet (splitting into individual words)
+        3. Either stemming/lemmatizing words or not (for use in subword tokenization)
 
         args:
             tweet: unprocessed DJT tweet
         ret:
             processed tweet: tweet that has been cleaned
-    '''
+    """
 
     # remove all quoted text
     tweet = re.sub('"[^"]*"', '', tweet)
@@ -105,17 +104,18 @@ def process_tweet(tweet):
     tokenized_tweet = [word for word in tokenized_tweet if word not in stopwords_set]
 
     # Stemming and Lemmatization
-    stemmer = PorterStemmer()
-    lem = WordNetLemmatizer()
+    if stemming_lemmatize:
+        stemmer = PorterStemmer()
+        lem = WordNetLemmatizer()
 
-    tokenized_tweet = [lem.lemmatize(word) for word in tokenized_tweet]
-    tokenized_tweet = [stemmer.stem(word) for word in tokenized_tweet]
+        tokenized_tweet = [lem.lemmatize(word) for word in tokenized_tweet]
+        tokenized_tweet = [stemmer.stem(word) for word in tokenized_tweet]
 
     return tokenized_tweet
 
 
-def process_labeled_data(data):
-    '''
+def process_labeled_data(data, stemming_lemmatize: bool):
+    """
            Apply the routine in process_tweet to the corpus of labeled tweets. After processing
            the dataset, remove the extra column (unnamed), drop all rows with NaN sentiment,
            and vectorize sentiment (1 -> negative, 2 -> neutral, 3 -> positive)
@@ -124,8 +124,8 @@ def process_labeled_data(data):
                data: unprocessed labeled data
            ret:
                data: labeled data that has been properly cleaned with respect to all the NLP conventions
-    '''
-    data['text'] = data['text'].apply(lambda x: process_tweet(x))
+    """
+    data['text'] = data['text'].apply(lambda x: process_tweet(x, stemming_lemmatize=stemming_lemmatize))
 
     # remove all rows that have nan sentiment and drop extra column
     data = data.drop(['Unnamed: 0'], axis=1).dropna(subset=['sentiment'])
@@ -134,7 +134,7 @@ def process_labeled_data(data):
     data = data[data['text'].str.len() > 2]
 
     # vectorize sentiment values
-    data['sentiment'] = data['sentiment'].apply(lambda x: 1 if x == 'negative' else 2 if x == 'neutral' else 3)
+    data['sentiment'] = data['sentiment'].apply(lambda x: 0 if x == 'negative' else 1 if x == 'neutral' else 2)
 
     data.to_csv(r'/Users/aksharma/PycharmProjects/Trump_Tweets/Data/preprocessed_data.csv', index=False)
 
@@ -148,8 +148,8 @@ def main():
 
     updated_data = pd.read_csv('data/labeled_data.csv')
 
-    cleaned_data = process_labeled_data(updated_data)
-    print(cleaned_data)
+    cleaned_data = process_labeled_data(updated_data, stemming_lemmatize=True)
+    print(cleaned_data['text'])
 
 
 if __name__ == '__main__':

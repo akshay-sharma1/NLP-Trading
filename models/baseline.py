@@ -28,7 +28,7 @@ def read_labeled_data():
 
     labeled_data = pd.read_csv(r'/Users/aksharma/PycharmProjects/Trump_Tweets/data/labeled_data.csv')
 
-    preprocessed = process_labeled_data(labeled_data)
+    preprocessed = process_labeled_data(labeled_data, stemming_lemmatize=True)
 
     x = preprocessed['text'].to_numpy()
     labels = preprocessed['sentiment'].to_numpy()

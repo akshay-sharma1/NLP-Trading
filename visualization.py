@@ -11,7 +11,7 @@ from preprocess import process_labeled_data
 def read_labeled_data():
     data = pd.read_csv('./data/labeled_data.csv')
 
-    return process_labeled_data(data)
+    return process_labeled_data(data, stemming_lemmatize=False)
 
 
 def mood_distribution(data):
