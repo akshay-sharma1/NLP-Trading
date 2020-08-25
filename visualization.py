@@ -59,7 +59,7 @@ def generate_word_cloud(data):
     words = ' '.join([' '.join(tweet) for tweet in data['text']])
 
     # load image and create worldcloud
-    twitter_mask = np.array(Image.open('/Users/aksharma/PycharmProjects/Trump_Tweets/twitter_mask.png'))
+    twitter_mask = np.array(Image.open('/assets/twitter_mask.png'))
     wec = WordCloud(background_color='white', max_words=1000, mask=twitter_mask, width=1800, height=1400,
                     contour_color='steelblue', contour_width=3)
     wec.generate(words)
