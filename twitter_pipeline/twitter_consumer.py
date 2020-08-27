@@ -32,20 +32,25 @@ natural_language_understanding.set_service_url(IBM_URL)
 
 
 def entity_recognition(tweet):
+
     if len(tweet.split()) < 3:
         return None
 
+    # attempt to query IBM's natural language processing API for company entities
     try:
         response = natural_language_understanding.analyze(text=tweet, features=Features(entities=EntitiesOptions())) \
             .get_result()
     except Exception:
-        return None
+        if 'trade' in tweet.lower() or 'tariff' in tweet.lower() or 'tarrifs' in tweet.lower():
+            return ['SPY']
+        else:
+            return None
 
     return response['entities'] if 'entities' in response else None
 
 
 def obtain_companies(entities):
-    return [entity['text'] for entity in entities if entity['type'] == 'Company']
+    return [entity['text'] for entity in entities if entity['type'] == 'Company'] if entities else None
 
 
 def preprocess_tweet(tweet):
@@ -73,19 +78,8 @@ def transform_processed(preprocessed):
     return vectorized.tolist()
 
 
-def predict_sentiment(tweet_info):
-    tweet = tweet_info['tweet']
-
-    entities = entity_recognition(tweet)
-
-    if entities:
-        companies = obtain_companies(entities)
-    else:
-        return
-
-    if len(companies) == 0:
-        return
-
+def predict_sentiment(tweet):
+    # preprocess tweet
     preprocessed = preprocess_tweet(tweet)
     vectorized = transform_processed(preprocessed)
 
@@ -93,13 +87,27 @@ def predict_sentiment(tweet_info):
 
     headers = {"content-type": "application/json"}
 
-    sentiment_predictions = requests.post(PERSONAL_MODEL_URL, data=data, headers=headers)
+    sentiment_prob = requests.post(PERSONAL_MODEL_URL, data=data, headers=headers).json()['predictions'][0]
 
-    return sentiment_predictions
+    # find correct class (label)
+    label = -1
+    for i in range(len(sentiment_prob)):
+        if sentiment_prob[i] > 0.5:
+            label = i
+
+    if label == -1:
+        return None
+    else:
+        if label == 0:
+            return 'negative'
+        elif label == 1:
+            return 'neutral'
+        else:
+            return 'positive'
 
 
 if __name__ == "__main__":
-    res = entity_recognition('Beautiful Maine Lobsters will now move tariff-free to Europe! For first time in many '
-                             'years. GREAT new deal by USTR levels playing field with Canada. Millions of $’s more in'
-                             ' EXPORTS...')
-    print(obtain_companies(res))
+    print(predict_sentiment(
+        'It WOULD BE HORRIBLE FOR THE DO NOTHING DEMOCRATS TO GET ELECTED. SLEEPY JOE CAN BARELY FORM A SENTENCE. '
+        'ELECT ME AND WE WILL WIN BIGLY!'))
+
