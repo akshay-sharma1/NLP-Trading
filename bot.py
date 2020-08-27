@@ -1,6 +1,12 @@
 from twitter_pipeline.twitter_producer import Twitter
 from twitter_pipeline.twitter_consumer import entity_recognition, obtain_companies, predict_sentiment
 
+from os import environ
+from flask import Flask
+
+app = Flask(__name__)
+app.run(environ.get('PORT'))
+
 
 def get_orig_tweet_link(tweet_info):
     BASE = 'http://twitter.com'
