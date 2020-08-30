@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 
-from preprocess import process_labeled_data
+from models.preprocess import process_labeled_data
 
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold

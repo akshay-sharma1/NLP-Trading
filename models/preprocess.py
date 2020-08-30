@@ -21,7 +21,7 @@ def read_json_data():
              tweet_data: preprocessed twitter_pipeline data according to the above conventions
     """
 
-    with open('data/trump_tweets.json') as f:
+    with open('../data/trump_tweets.json') as f:
         json_data = json.load(f)
 
     normalized_json = pd.json_normalize(json_data)
@@ -146,7 +146,7 @@ def main():
 
     pre_label_data(tweet_data)
 
-    updated_data = pd.read_csv('data/labeled_data.csv')
+    updated_data = pd.read_csv('../data/labeled_data.csv')
 
     cleaned_data = process_labeled_data(updated_data, stemming_lemmatize=True)
     print(cleaned_data['text'])

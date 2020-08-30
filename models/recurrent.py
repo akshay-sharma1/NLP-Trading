@@ -1,18 +1,15 @@
 import pandas as pd
 import numpy as np
 import tensorflow as tf
-import time
 
-from preprocess import process_labeled_data
+from sklearn.model_selection import train_test_split
 
-from models.baseline import train_validation_split
+from models.preprocess import process_labeled_data
 from models.sequential import vectorize_data, plot_accuracy_loss
 from models.subword_encoder import BPE
 
 NUM_EPOCHS = 10
 EMBEDDING_DIM = 64
-
-
 
 
 def read_preprocess():
@@ -43,6 +40,10 @@ def subword_tokenize(tweets, encoder):
         tokenized.append(encoded_tweet)
 
     return tokenized
+
+
+def train_validation_split(tokenized, labels):
+    return train_test_split(tokenized, labels, test_size=0.3, random_state=42, stratify=labels)
 
 
 def create_recurrent_nn(vocab_size, embedding_dim, max_length):
