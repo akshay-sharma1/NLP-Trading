@@ -3,3 +3,4 @@ venv/
 __pycache__/
 checkpoints/
 data/.DS_Store
+models/demo_model
