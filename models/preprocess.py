@@ -15,9 +15,10 @@ def read_json_data():
          Reads and cleans data from the input dataset, which is in JSON form. Converts this JSON data into a pandas
          dataframe, removes rows that are retweets or that contain URLS, and drops the columns that aren't relevant
          (retweet_count, favorites, id, is_retweet).
+
          args: None
          ret:
-             tweet_data: preprocessed twitter data according to the above conventions
+             tweet_data: preprocessed twitter_pipeline data according to the above conventions
     """
 
     with open('data/trump_tweets.json') as f:
@@ -55,6 +56,7 @@ def pre_label_data(data):
     """
            Naively label sentiment data based on the presence of a list of words (e.g hillary -> negative,
            biden -> negative, rally -> positive, Make America Great Again -> positive).
+
            args:
                data: preprocessed pandas dataframe containing 3 columns: source, text, time
            ret:
@@ -123,7 +125,7 @@ def process_labeled_data(data, stemming_lemmatize: bool):
            args:
                data: unprocessed labeled data
            ret:
-               data: labeled data that has been properly cleaned with respect to all the NLP conventions
+               data: labeled data that has been properly cleaned with respect to all the above steps
     """
     data['text'] = data['text'].apply(lambda x: process_tweet(x, stemming_lemmatize=stemming_lemmatize))
 
@@ -135,8 +137,6 @@ def process_labeled_data(data, stemming_lemmatize: bool):
 
     # vectorize sentiment values
     data['sentiment'] = data['sentiment'].apply(lambda x: 0 if x == 'negative' else 1 if x == 'neutral' else 2)
-
-    data.to_csv(r'/Users/aksharma/PycharmProjects/Trump_Tweets/Data/preprocessed_data.csv', index=False)
 
     return data
 

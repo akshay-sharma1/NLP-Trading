@@ -21,7 +21,6 @@ WHITE_HOUSE_ID = '822215673812119553'
 # Papa Elon's id
 ELON_MUSK_USER_ID = '44196397'
 
-
 ids = {TRUMP_USER_ID, ELON_MUSK_USER_ID, WHITE_HOUSE_ID}
 
 
@@ -41,7 +40,7 @@ class Twitter:
         self.streamer = MyStreamListener(sentiment_func)
         my_stream = tweepy.Stream(auth=self.twitter_auth, listener=self.streamer)
 
-        my_stream.filter([TRUMP_USER_ID, ELON_MUSK_USER_ID])
+        my_stream.filter([TRUMP_USER_ID, ELON_MUSK_USER_ID, WHITE_HOUSE_ID])
 
     def tweet_investment(self, companies, sentiment, link):
         # construct string with status
@@ -52,14 +51,12 @@ class Twitter:
             status += ','.join(companies) + ' are'
 
         # handle all possible cases
-        if not sentiment:
-            status = ' no clue about ' + ','.join(companies) + emoji.emojize(' ')
+        if not sentiment or sentiment == 'neutral':
+            status += ' staying the same. Time to buy credit spreads i guess 😝'
         elif sentiment == 'positive':
             status += ' going to the Moon! Hop on the bull train now! 🐃'
         elif sentiment == 'negative':
             status += ' going in the toilet. Buy puts while you still can! 🐻'
-        else:
-            status += ' staying the same. Time to buy credit spreads i guess 😝'
 
         status += link
         self.api.update_status(status=status)
@@ -75,13 +72,44 @@ class MyStreamListener(tweepy.StreamListener):
         self.error_status = None
 
     def start_threads(self):
-        for worker_id in range(10):
+        for worker_id in range(100):
             worker = threading.Thread(target=self.listening_queue.process_queue)
             worker.daemon = True
             worker.start()
             self.threads.append(worker)
 
     def on_status(self, status):
+        # ensure the least amount of computation in
+        # order to avoid streaming error
+        self.listening_queue.put_object(status)
+        return True
+
+    def on_error(self, status):
+        self.error_status = status
+        return False
+
+
+class ListeningQueue:
+    def __init__(self, sentiment_func):
+        self.queue = queue.Queue()
+        self.stop = threading.Event()
+
+        self.sentiment_func = sentiment_func
+
+    def put_object(self, obj):
+        self.queue.put(obj)
+
+    def process_queue(self):
+        while not self.stop.is_set():
+            try:
+                status = self.queue.get(block=True, timeout=60)
+                self.parse_status(status)
+                self.queue.task_done()
+            except queue.Empty:
+                print('queue is empty..')
+                continue
+
+    def parse_status(self, status):
         # load tweet status object
         try:
             tweet = status._json
@@ -107,9 +135,8 @@ class MyStreamListener(tweepy.StreamListener):
 
         meta_info['tweet'], meta_info['tweet_id'] = tweet_text, tweet_id
 
-        print('sending data with name {}'.format(meta_info['name']))
-        self.listening_queue.put_object(meta_info)
-        return True
+        print('processing data with name {}'.format(meta_info['name']))
+        self.sentiment_func(meta_info)
 
     def retrieve_text(self, status):
 
@@ -127,29 +154,3 @@ class MyStreamListener(tweepy.StreamListener):
                 text = status.text
 
         return text
-
-    def on_error(self, status):
-        self.error_status = status
-        return False
-
-
-class ListeningQueue:
-    def __init__(self, sentiment_func):
-        self.queue = queue.Queue()
-        self.stop = threading.Event()
-
-        self.sentiment_func = sentiment_func
-
-    def put_object(self, obj):
-        self.queue.put(obj)
-
-    def process_queue(self):
-        while not self.stop.is_set():
-            try:
-                tweet_info = self.queue.get(block=True, timeout=60)
-                print('processing data with name {}'.format(tweet_info['name']))
-                self.sentiment_func(tweet_info)
-                self.queue.task_done()
-            except queue.Empty:
-                print('queue is empty..')
-                continue
