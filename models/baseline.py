@@ -63,9 +63,10 @@ def train_validation_split(tweets, labels):
         positive/neutral/negative tweets.
 
             args:
-                labels: sentiment labels for each tweet in dataset
+                tweets: all of the tweets
+                labels: sentiment labels
             ret:
-                class_proportions: dict containing a mapping from each label to its proportion
+                train_x, test_x, train_y, test_y: train data and test data
 
     """
 
@@ -187,11 +188,10 @@ def kfold_cross_validation(tweets, labels):
         and validation, and the overall skill of the model. Computes all the metrics on each iteration.
 
             args:
-                predicted_labels: labels predicted by the ML model
-                actual_labels: original labels
-                model_type: model name (either logistic regression or naive bayes)
+                tweets: all tweets
+                labels: sentiment classes for each tweet
             ret:
-                    None: prints the metrics
+                None
 
     """
 

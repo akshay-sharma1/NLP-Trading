@@ -4,6 +4,16 @@ from collections import defaultdict
 
 
 def get_pairs(word):
+    """
+        Helper function that gets all unique pairs of characters in a word
+        using two-pointers and a set.
+
+            args:
+                word: str
+            ret:
+                pairs: set that has all consecutive unique character pairs
+
+    """
     pairs = set()
 
     # returns all unique pairs using two-pointers
@@ -16,6 +26,10 @@ def get_pairs(word):
 
 
 class BPE:
+    """
+        Helper class that encodes a word based on its subwords through a
+        series of consecutive merges.
+    """
     def __init__(self, data, num_merges):
         # core data structures
         self.vocab = defaultdict(int)
@@ -25,11 +39,28 @@ class BPE:
         self.data = data
 
     def create_vocab(self):
+        """
+            Function that creates the initial vocab at the individual word level.
+            Splits each word into individual characters with a space between them and
+            appends end of word character (<w>). Modifies class vocab attribute by
+            creating mappings between words and their frequencies.
+
+        """
         for sentence in self.data:
             for word in sentence.split():
                 self.vocab[' '.join(list(word)) + ' <w>'] += 1
 
     def get_pair_freqs(self):
+        """
+            Calculates character-level frequencies of each word in the vocabulary
+            on each iteration. Is used to calculate the 'best' possible candidate for a
+            pair-wise merge based on frequencies. (e.g if (e r) have the highest frequency,
+            merge them to form (er) in the new vocab as a separate token).
+
+            ret:
+                pair_stats: frequencies of individual character pairs in vocabulary
+
+        """
         pair_stats = defaultdict(int)
 
         for word, freq in self.vocab.items():
@@ -40,6 +71,12 @@ class BPE:
         return pair_stats
 
     def merge_vocab(self, pair):
+        """
+           Merges the most frequently occurring pair of characters in each iteration.
+           Creates new vocab with newly encoded token replacing the old one, and sets
+           the class vocab to the new one.
+
+        """
         # merges 'best' unigram pair into a bigram
         new_vocab = {}
         bigram = re.escape(' '.join(pair))
@@ -68,6 +105,15 @@ class BPE:
         return token_freqs, sorted_tokens
 
     def train_vocab(self):
+        """
+            Comprehensive routine that trains the subword_encoder on a corpus of tweets.
+            Initially creates a vocab using the create_vocab class subroutine, iterates
+            for num_merges, calculates and merges most frequently occurring pair on each merge,
+            and saves the best pair token into a hashmap (self.bpe_hash) that is used to encode
+            new words in the encode_words routine.
+
+        """
+
         self.create_vocab()
         # merge vocab for num_merges iterations
         for i in range(self.num_merges):
@@ -81,6 +127,18 @@ class BPE:
             self.bpe_hash[best] = i
 
     def encode_word(self, word):
+        """
+            Uses fitted subword_encoder (BPE instantiation) to encode a new word based
+            on fitted vocab tokens. Initially, gets all character pairs in the word, and
+            encodes the word based on all accumulated subwords in the vocab.
+
+            For example, if we had 'highest' as our input, and our vocabulary had the following
+            tokens: ['hi', 'ghe', 'st', 'mount', 'ain'], 'highest' would be encoded as:
+
+            'highest' => ['hi', 'ghe', 'st']
+
+            based on our accumulated vocab tokens
+        """
         word = list(word)
         word.append('<w>')
 
@@ -88,10 +146,12 @@ class BPE:
         if not pairs:
             return word
 
+        # iterate until particular condition is reached
         iteration = 0
         while True:
             iteration += 1
 
+            # get the bigram we saved in the hashmap during merges
             bigram = min(pairs, key=lambda pair: self.bpe_hash.get(pair, float('inf')))
             if bigram not in self.bpe_hash:
                 break
@@ -99,6 +159,8 @@ class BPE:
             first, second = bigram
             new_word = []
 
+            # attempt to construct the word based on where the
+            # bigram is in the word
             i = 0
             while i < len(word):
                 try:

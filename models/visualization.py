@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from collections import Counter
 from wordcloud import WordCloud
 from PIL import Image
-from preprocess import process_labeled_data
+from models.preprocess import process_labeled_data
 
 
 def read_labeled_data():
@@ -41,7 +41,7 @@ def sentiment_over_time(data):
     pos_neg = data[data['sentiment'] != 1]
 
     # group sentiment by month
-    monthly_sentiment = pos_neg.groupby([pd.Grouper(key='created_at', freq='1M'), 'sentiment']).size().\
+    monthly_sentiment = pos_neg.groupby([pd.Grouper(key='created_at', freq='1M'), 'sentiment']).size(). \
         unstack('sentiment').fillna(0)
 
     # plot graph
@@ -68,10 +68,6 @@ def generate_word_cloud(data):
     plt.title('Twitter Word Cloud')
     plt.axis('off')
     plt.show()
-
-
-def visualize_word_distance(vectorized_data):
-    pass
 
 
 def main():
