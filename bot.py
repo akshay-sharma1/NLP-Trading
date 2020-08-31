@@ -1,5 +1,5 @@
-from twitter_pipeline.twitter_producer import Twitter
-from twitter_pipeline.twitter_consumer import entity_recognition, obtain_companies, predict_sentiment
+from twitter_producer import Twitter
+from twitter_consumer import entity_recognition, obtain_companies, predict_sentiment, category_recognition
 
 
 def get_orig_tweet_link(tweet_info):
@@ -14,8 +14,14 @@ def analyze_and_tweet(tweet_info):
     entities = entity_recognition(text)
     companies = obtain_companies(entities=entities)
 
-    if not companies:
+    econ_index = category_recognition(text)
+
+    # if tweet isn't about a company or the economy, stop
+    if not companies and not econ_index:
         return
+    else:
+        if not companies:
+            companies = econ_index
 
     sentiment = predict_sentiment(text)
     link = get_orig_tweet_link(tweet_info)
