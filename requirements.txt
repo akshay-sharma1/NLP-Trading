@@ -52,7 +52,7 @@ textblob==0.15.3
 threadpoolctl==2.1.0
 tqdm==4.47.0
 tweepy==3.9.0
-urllib3==1.25.10
+urllib3==1.26.5
 websocket-client==0.48.0
 Werkzeug==1.0.1
 wordcloud==1.7.0
