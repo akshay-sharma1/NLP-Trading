@@ -54,6 +54,6 @@ tqdm==4.47.0
 tweepy==3.9.0
 urllib3==1.25.10
 websocket-client==0.48.0
-Werkzeug==1.0.1
+Werkzeug==2.2.3
 wordcloud==1.7.0
 wrapt==1.12.1
